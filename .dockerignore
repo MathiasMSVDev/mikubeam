@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+.github
+
+# Node dependencies and build output
+web-client/node_modules
+web-client/dist
+
+# Go build artifacts
+bin/
+
+# Documentation
+docs/
+README.md
+LICENSE
+
+# Editor / IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker files (no need to include these in the image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Logs
+*.log

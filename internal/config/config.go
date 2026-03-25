@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/creasty/defaults"
 	"github.com/pelletier/go-toml/v2"
@@ -22,17 +23,46 @@ func Default() Config {
 }
 
 func Load(path string) (Config, error) {
-	if path == "" {
-		return Default(), nil
-	}
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return Default(), nil
-	}
 	c := Default()
-	if err := toml.Unmarshal(b, &c); err != nil {
-		return Default(), nil
+
+	if path != "" {
+		b, err := os.ReadFile(path)
+		if err == nil {
+			_ = toml.Unmarshal(b, &c)
+		}
 	}
+
+	// Environment variable overrides — useful for Docker / Dokploy deployments.
+	// Priority: env var > config file > compiled default.
+
+	// PORT is the conventional cloud env var; SERVER_PORT is the project-specific one.
+	// SERVER_PORT wins over PORT when both are set.
+	if v := os.Getenv("PORT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			c.ServerPort = n
+		}
+	}
+	if v := os.Getenv("SERVER_PORT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			c.ServerPort = n
+		}
+	}
+
+	// ALLOWED_ORIGIN controls the CORS allowed-origins header.
+	// Use "*" to allow all origins when the server itself serves the web client.
+	if v := os.Getenv("ALLOWED_ORIGIN"); v != "" {
+		c.AllowedOrigin = v
+	}
+
+	// PROXIES_FILE / USER_AGENTS_FILE let you point to files outside the default
+	// data/ directory, e.g. when using a Docker bind-mount on a different path.
+	if v := os.Getenv("PROXIES_FILE"); v != "" {
+		c.ProxiesFile = v
+	}
+	if v := os.Getenv("USER_AGENTS_FILE"); v != "" {
+		c.UserAgentsFile = v
+	}
+
 	return c, nil
 }
 
